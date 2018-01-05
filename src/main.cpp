@@ -24,6 +24,8 @@
 
 #include "debug.h"
 #include "pong.h"
+#include "config.h"
+#include "bluetooth.h"
 
 namespace libbase
 {
@@ -69,10 +71,10 @@ int main() {
     LcdConsole console(Config::GetConsoleConfig(&lcd));
     lcd.SetRegion(Lcd::Rect(0,0,128,160));
     writer.WriteString("YOU WIN!");
-    Debug::message = "YO";
-    Debug::pLcd = &lcd;
-//    Debug::pWriter = &writer;
-    Debug::pConsole = &console;
+    //Debug::message = "YO";
+    //Debug::pLcd = &lcd;
+    //Debug::pWriter = &writer;
+    //Debug::pConsole = &console;
 
     led0.SetEnable(1);
     led1.SetEnable(1);

@@ -28,10 +28,19 @@ using std::function;
 class Bluetooth: public Comm {
 public:
 	//initialize member bluetooth and member pit in this constructor
-    Bluetooth();
+    Bluetooth():
+    	m_bt(Config::GetBluetoothConfig([this](const Byte *data, const size_t size){
+    		Comm::Listener(data, size);
+    		return true;
+    	})),
+		m_pit(Config::GetBluetoothPitConfig([this](Pit*){
+    		this->SendFirst();
+    	})) {}
 
     //implement send buffer
-    virtual void SendBuffer(const Byte *buff, const int &size);
+    virtual void SendBuffer(const Byte *buff, const int &size){
+    	m_bt.SendBuffer(buff, size);
+    }
 
     //getter
     bool IsTimerEnable(){return is_timer_enabled;}
@@ -42,7 +51,10 @@ private:
     bool is_timer_enabled=false;
 
     //implement enable timer
-    void EnableTimer(bool flag);
+    void EnableTimer(bool flag){
+    	is_timer_enabled = flag;
+    	m_pit.SetEnable(flag);
+    }
 };
 
 

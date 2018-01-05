@@ -30,7 +30,7 @@ public:
 	/**
 	 * Package Types (better looking of 0-11 integers)
 	 */
-	enum PkgType{
+	enum PkgType : uint8_t{
 		kStart=0,
 		kStartACK=1,
 		kMasterPlatform=2,
@@ -58,9 +58,10 @@ public:
 	 * Structure of a single package
 	 */
 	struct Package{
-		int frame_id;
+		uint8_t frame_id;
 		PkgType type;
 		vector<Byte> data;
+		Byte endingByte;
 	};
 
 	/**
@@ -71,8 +72,8 @@ public:
 	/**
 	 * Constructor and destructor
 	 */
-	Comm();
-	virtual ~Comm();
+	Comm():is_waiting_ack(false){}
+	virtual ~Comm(){}
 
 	//TX helpers
 	/**
@@ -81,7 +82,14 @@ public:
 	 * else send out the package directly
 	 * tips: use a queue
 	 */
-	void SendPackage(const Package& pkg, bool need_ack = true);
+	void SendPackage(const Package& pkg, bool need_ack = true){
+//		if (IsWaitingACK()){
+//			queue.push_back(pkg);
+//		}
+//		else{
+//			SendBuffer(&pkg.frame_id,sizeof(pkg));
+//		}
+	}
 
 	/**
 	 * Implementation of sending out bytes shall be implemented in derived class
@@ -92,7 +100,16 @@ public:
 	 * Listener (will be irs for bluetooth) when bunch of Bytes arrive
 	 * You may want to parse the Byte array into packages
 	 */
-	bool Listener(const Byte* data, const size_t size);
+	bool Listener(const Byte* data, const size_t size){
+		for (int i = 0; i < size; i++){
+			if ((i == size - 1) && (*data+i == BitConsts::kSTART) || (*data+i == BitConsts::kEND) || (*data+i == BitConsts::kACK)){
+				BuildBufferPackage();
+			}
+			else{
+				buffer.push_back(*data+i);
+			}
+		}
+	}
 
 	/**
 	 * Set the package handler, which shall be called when a package is parsed
@@ -118,13 +135,16 @@ protected:
 	/**
 	 * deliver the first package in queue
 	 */
-	virtual void SendFirst();
+	virtual void SendFirst(){
+		SendBuffer(&queue[0].frame_id,sizeof(queue[0]));
+		queue.erase(queue.begin());
+	}
 
 private:
 	/**
 	 * package handler function
 	 */
-	PackageHandler Handler;
+	PackageHandler Handler; //implement later, change the value & render & validation
 
 	//rx veriable
 	vector<Byte> buffer;	//temporary storage for incoming Bytes
@@ -134,7 +154,28 @@ private:
 	 * build the package, call handler/ handle the packages directly
 	 * and clear buffer
 	 */
-	void BuildBufferPackage();
+	void BuildBufferPackage(){
+		Package receivedPkg;
+		receivedPkg.frame_id = buffer[0];
+		receivedPkg.type = static_cast<PkgType>(buffer[1]);
+		for (int i = 2; i < sizeof(receivedPkg)-1; i++){
+			receivedPkg.data.push_back(buffer[i]);
+		}
+		receivedPkg.endingByte = buffer[sizeof(receivedPkg)-1];
+		buffer.clear();
+		Handler(receivedPkg);
+		if (receivedPkg.endingByte == BitConsts::kACK){
+			is_waiting_ack = false;
+		}
+		else{
+			//send ack msg
+			Package ackPkg;
+			ackPkg.frame_id = receivedPkg.frame_id;
+			ackPkg.type = static_cast<PkgType>(receivedPkg.type + 1);
+			ackPkg.endingByte = BitConsts::kACK;
+			SendPackage(ackPkg,false);
+		}
+	}
 };
 
 
