@@ -34,12 +34,19 @@ public:
     		return true;
     	})),
 		m_pit(Config::GetBluetoothPitConfig([this](Pit*){
-    		this->SendFirst();
+    		//this->SendFirst();
+    		if (is_waiting_ack){
+    			SendFirst();
+    		}
     	})) {}
+
+    ~Bluetooth(){}
 
     //implement send buffer
     virtual void SendBuffer(const Byte *buff, const int &size){
     	m_bt.SendBuffer(buff, size);
+    	send_time = libsc::System::Time();
+    	is_timer_enabled = is_waiting_ack;
     }
 
     //getter

@@ -19,6 +19,7 @@
 #include <libbase/misc_types.h>
 
 #include "debug.h"
+#include "bluetooth.h"
 
 using std::vector;
 using std::function;
@@ -61,6 +62,7 @@ public:
 		uint8_t frame_id;
 		PkgType type;
 		vector<Byte> data;
+		//Byte endingByte = BitConsts::kEND;
 		Byte endingByte;
 	};
 
@@ -83,12 +85,16 @@ public:
 	 * tips: use a queue
 	 */
 	void SendPackage(const Package& pkg, bool need_ack = true){
-//		if (IsWaitingACK()){
-//			queue.push_back(pkg);
-//		}
-//		else{
-//			SendBuffer(&pkg.frame_id,sizeof(pkg));
-//		}
+		if ((IsWaitingACK()) || (queue.size() > 0)){
+			queue.push_back(pkg);
+		}
+		else{
+			SendBuffer(&pkg.frame_id,sizeof(pkg));
+			if (need_ack){
+				is_waiting_ack = true;
+				queue.push_back(pkg);
+			}
+		}
 	}
 
 	/**
@@ -102,13 +108,12 @@ public:
 	 */
 	bool Listener(const Byte* data, const size_t size){
 		for (int i = 0; i < size; i++){
-			if ((i == size - 1) && (*data+i == BitConsts::kSTART) || (*data+i == BitConsts::kEND) || (*data+i == BitConsts::kACK)){
+			buffer.push_back(*data+i);
+			if ((i == size - 1) && ((*data+i == BitConsts::kSTART) || (*data+i == BitConsts::kEND) || (*data+i == BitConsts::kACK))){
 				BuildBufferPackage();
 			}
-			else{
-				buffer.push_back(*data+i);
-			}
 		}
+		return 0;
 	}
 
 	/**
@@ -121,7 +126,7 @@ public:
 
 	//tx variables
 	vector<Package> queue;	//pending send package
-	int send_time;			//last send time
+	int send_time = -1;			//last send time
 
 protected:
 	bool is_waiting_ack;
@@ -137,7 +142,12 @@ protected:
 	 */
 	virtual void SendFirst(){
 		SendBuffer(&queue[0].frame_id,sizeof(queue[0]));
-		queue.erase(queue.begin());
+		if (queue[0].type % 2 == 0){
+			is_waiting_ack = true;
+		}
+		else{
+			queue.erase(queue.begin());
+		}
 	}
 
 private:
@@ -145,10 +155,10 @@ private:
 	 * package handler function
 	 */
 	PackageHandler Handler; //implement later, change the value & render & validation
-
+public:
 	//rx veriable
 	vector<Byte> buffer;	//temporary storage for incoming Bytes
-
+private:
 	/**
 	 * when the buffer contains a complete package bytes,
 	 * build the package, call handler/ handle the packages directly
@@ -166,6 +176,8 @@ private:
 		Handler(receivedPkg);
 		if (receivedPkg.endingByte == BitConsts::kACK){
 			is_waiting_ack = false;
+			queue.erase(queue.begin());
+			SendFirst();
 		}
 		else{
 			//send ack msg
@@ -173,7 +185,7 @@ private:
 			ackPkg.frame_id = receivedPkg.frame_id;
 			ackPkg.type = static_cast<PkgType>(receivedPkg.type + 1);
 			ackPkg.endingByte = BitConsts::kACK;
-			SendPackage(ackPkg,false);
+			SendBuffer(&ackPkg.frame_id,sizeof(ackPkg));
 		}
 	}
 };

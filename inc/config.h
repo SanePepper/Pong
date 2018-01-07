@@ -38,6 +38,7 @@ public:
 	static Led::Config GetLedConfig(int id){
 		Led::Config config;
 		config.id = id;
+		config.is_active_low = true;
 		return config;
 	}
 
@@ -47,14 +48,40 @@ public:
 
     static St7735r::Config GetLcdConfig() {
         //TODO: finish it
+		St7735r::Config config;
+		config.fps = 20;
+		config.is_bgr = false;
+		//config.is_revert = false;
+		return config;
     }
 
+    static LcdTypewriter::Config GetWriterConfig(St7735r* lcd){
+		LcdTypewriter::Config config;
+		config.is_clear_line = true;
+		config.is_text_wrap = true;
+		config.text_color = 0xFFFFFF;
+		config.bg_color = 0;
+		config.lcd = lcd;
+		return config;
+
+    }
+
+    static LcdConsole::Config GetConsoleConfig( St7735r* lcd){
+		LcdConsole::Config config;
+		config.bg_color = 0;
+		config.text_color = 0xFFFFFF;
+		config.region = Lcd::Rect(0, 0, 128, 160);
+		config.lcd = lcd;
+		return config;
+
+    }
     static JyMcuBt106::Config GetBluetoothConfig(std::function<bool(const Byte *data, const size_t size)> isr) {
         //TODO: finish it
     	JyMcuBt106::Config config;
     	config.id = 0;
     	config.baud_rate = libbase::k60::Uart::Config::BaudRate::k115200;
     	config.rx_isr = isr;
+    	return config;
     }
 
     static Pit::Config GetBluetoothPitConfig(std::function<void(Pit*)> isr){
@@ -64,16 +91,10 @@ public:
     	 pitConfig.count = 75000*100;
     	 pitConfig.isr = isr;
     	 pitConfig.is_enable = false; //dont know if it's needed
-    	 Pit pit(pitConfig);
+    	 //Pit pit(pitConfig);
+    	 return pitConfig;
     }
 
-    static LcdTypewriter::Config GetWriterConfig(St7735r* lcd){
-
-    }
-
-    static LcdConsole::Config GetConsoleConfig( St7735r* lcd){
-
-    }
 };
 
 
