@@ -31,7 +31,7 @@ public:
 	/**
 	 * Package Types (better looking of 0-11 integers)
 	 */
-	enum PkgType : uint8_t{
+	enum PkgType : Byte{
 		kStart=0,
 		kStartACK=1,
 		kMasterPlatform=2,
@@ -45,7 +45,9 @@ public:
 		kResult=10,
 		kResultACK=11
 	};
-
+	int NSCount = 0;
+	int ASCount = 0;
+	int ARCount = 0;
 	/**
 	 * Special Byte for labeling end of package
 	 */
@@ -59,7 +61,7 @@ public:
 	 * Structure of a single package
 	 */
 	struct Package{
-		uint8_t frame_id;
+		Byte frame_id;
 		PkgType type;
 		vector<Byte> data;
 		//Byte endingByte = BitConsts::kEND;
@@ -90,9 +92,11 @@ public:
 		}
 		else{
 			SendBuffer(&pkg.frame_id,sizeof(pkg));
+			NSCount++;
 			if (need_ack){
 				is_waiting_ack = true;
 				queue.push_back(pkg);
+				S = pkg;
 			}
 		}
 	}
@@ -107,10 +111,14 @@ public:
 	 * You may want to parse the Byte array into packages
 	 */
 	bool Listener(const Byte* data, const size_t size){
+		//buffer.clear();
 		for (int i = 0; i < size; i++){
-			buffer.push_back(*data+i);
-			if ((i == size - 1) && ((*data+i == BitConsts::kSTART) || (*data+i == BitConsts::kEND) || (*data+i == BitConsts::kACK))){
+			buffer.push_back(*(data+i));
+			if ((i == size - 1) && ((*(data+i) == BitConsts::kSTART) || (*(data+i) == BitConsts::kEND) || (*(data+i) == BitConsts::kACK))){
+				Tb = *(data+i);
+				//Tb = buffer[sizeof(buffer)-1];
 				BuildBufferPackage();
+				C++;
 			}
 		}
 		return 0;
@@ -141,12 +149,16 @@ protected:
 	 * deliver the first package in queue
 	 */
 	virtual void SendFirst(){
-		SendBuffer(&queue[0].frame_id,sizeof(queue[0]));
-		if (queue[0].type % 2 == 0){
-			is_waiting_ack = true;
-		}
-		else{
-			queue.erase(queue.begin());
+		if (queue.size() > 0){
+			SendBuffer(&queue[0].frame_id,sizeof(queue[0]));
+			NSCount++;
+			if (queue[0].type % 2 == 0){
+				is_waiting_ack = true;
+				//eByte = queue[0].endingByte;
+			}
+			else{
+				queue.erase(queue.begin());
+			}
 		}
 	}
 
@@ -158,12 +170,17 @@ private:
 public:
 	//rx veriable
 	vector<Byte> buffer;	//temporary storage for incoming Bytes
+	Byte C = 0;
+	bool b1 = 0,b2 = 0,b3 = 0;
+	Package T,S;
+	Byte Tb;
 private:
 	/**
 	 * when the buffer contains a complete package bytes,
 	 * build the package, call handler/ handle the packages directly
 	 * and clear buffer
 	 */
+
 	void BuildBufferPackage(){
 		Package receivedPkg;
 		receivedPkg.frame_id = buffer[0];
@@ -172,21 +189,31 @@ private:
 			receivedPkg.data.push_back(buffer[i]);
 		}
 		receivedPkg.endingByte = buffer[sizeof(receivedPkg)-1];
+		T = receivedPkg;
 		buffer.clear();
 		Handler(receivedPkg);
+		C++;
+		b1 = (receivedPkg.endingByte == BitConsts::kSTART);
+		b2 = (receivedPkg.endingByte == BitConsts::kEND);
+		b3 = (receivedPkg.endingByte == BitConsts::kACK);
 		if (receivedPkg.endingByte == BitConsts::kACK){
 			is_waiting_ack = false;
 			queue.erase(queue.begin());
 			SendFirst();
+			ARCount++;
 		}
-		else{
+		else if ((receivedPkg.endingByte == BitConsts::kSTART) || (receivedPkg.endingByte == BitConsts::kEND)){
 			//send ack msg
 			Package ackPkg;
 			ackPkg.frame_id = receivedPkg.frame_id;
 			ackPkg.type = static_cast<PkgType>(receivedPkg.type + 1);
+			ackPkg.data = {};
 			ackPkg.endingByte = BitConsts::kACK;
 			SendBuffer(&ackPkg.frame_id,sizeof(ackPkg));
+			ASCount++;
+			C++;
 		}
+
 	}
 };
 

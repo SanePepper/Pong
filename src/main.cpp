@@ -87,7 +87,7 @@ int main() {
 
     Bluetooth bt;
 
-    lcd.FillColor(0);
+    //lcd.FillColor(0);
 
 
     bt.SetHandler([&led0,&led1,&led2,&led3,&bt,&pkg](Bluetooth::Package package){
@@ -102,8 +102,8 @@ int main() {
     	}
     });
 
+    //bt.SendPackage({0,Bluetooth::PkgType::kStart,{},Bluetooth::BitConsts::kSTART});
     bt.SendPackage({0,Bluetooth::PkgType::kLocation,{1,2},Bluetooth::BitConsts::kEND});
-    bt.SendPackage({0,Bluetooth::PkgType::kStart,{},Bluetooth::BitConsts::kSTART});
 
     while(1){
     	if(System::Time()%50==0){
@@ -127,10 +127,22 @@ int main() {
 			sprintf(c,"last:%d",bt.send_time);
 			writer.WriteBuffer(c,10);
 			lcd.SetRegion(Lcd::Rect(0,60,100,15));
-			sprintf(c,"B:%d",bt.buffer.size());
+			sprintf(c,"E:%d",bt.Tb);
 			writer.WriteBuffer(c,10);
 			lcd.SetRegion(Lcd::Rect(0,75,100,15));
-			sprintf(c,"L:%d",bt.queue[0].type);
+			sprintf(c,"NS:%d",bt.NSCount);
+			writer.WriteBuffer(c,10);
+			lcd.SetRegion(Lcd::Rect(0,90,100,15));
+			sprintf(c,"AS:%d",bt.ASCount);
+			writer.WriteBuffer(c,10);
+			lcd.SetRegion(Lcd::Rect(0,105,100,15));
+			sprintf(c,"AR:%d",bt.ARCount);
+			writer.WriteBuffer(c,10);
+			lcd.SetRegion(Lcd::Rect(0,120,100,15));
+			sprintf(c,"%d %d %d %d",bt.b1,bt.b2,bt.b3,bt.C);
+			writer.WriteBuffer(c,10);
+			lcd.SetRegion(Lcd::Rect(0,135,100,15));
+			sprintf(c,"%d %d",bt.T.endingByte,bt.S.endingByte);
 			writer.WriteBuffer(c,10);
     	}
 
