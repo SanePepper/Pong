@@ -102,48 +102,45 @@ int main() {
     	}
     });
 
-    //bt.SendPackage({0,Bluetooth::PkgType::kStart,{},Bluetooth::BitConsts::kSTART});
+    bt.SendPackage({57,Bluetooth::PkgType::kStart,{},Bluetooth::BitConsts::kSTART});
     bt.SendPackage({0,Bluetooth::PkgType::kLocation,{1,2},Bluetooth::BitConsts::kEND});
 
     while(1){
     	if(System::Time()%50==0){
 			char c[10];
 			lcd.SetRegion(Lcd::Rect(0,0,100,15));
-			if(bt.IsTimerEnable()){
-				writer.WriteString("timer enabled");
-			}else{
-				writer.WriteString("timer disabled");
-			}
-			lcd.SetRegion(Lcd::Rect(0,15,100,15));
 			if(bt.IsWaitingACK()){
 				writer.WriteString("waiting");
 			}else{
 				writer.WriteString("not waiting");
 			}
-			lcd.SetRegion(Lcd::Rect(0,30,100,15));
+			lcd.SetRegion(Lcd::Rect(0,15,100,15));
 			sprintf(c,"Qsize:%d",bt.queue.size());
 			writer.WriteBuffer(c,10);
+
+			lcd.SetRegion(Lcd::Rect(0,30,100,15));
+			sprintf(c,"%d %d %d %d %d",bt.s[0],bt.s[1],bt.s[2],bt.s[3],bt.s[4]);
+			writer.WriteBuffer(c,10);
 			lcd.SetRegion(Lcd::Rect(0,45,100,15));
-			sprintf(c,"last:%d",bt.send_time);
+			sprintf(c,"%d %d %d %d %d",bt.r[0],bt.r[1],bt.r[2],bt.r[3],bt.r[4]);
 			writer.WriteBuffer(c,10);
-			lcd.SetRegion(Lcd::Rect(0,60,100,15));
-			sprintf(c,"E:%d",bt.Tb);
-			writer.WriteBuffer(c,10);
+//			lcd.SetRegion(Lcd::Rect(0,60,100,15));
+//			sprintf(c,"%d %d %d %d %d   ",bt.ss,bt.sr,bt.sb,bt.sc,bt.b1);
+//			writer.WriteBuffer(c,10);
+
 			lcd.SetRegion(Lcd::Rect(0,75,100,15));
-			sprintf(c,"NS:%d",bt.NSCount);
+			sprintf(c,"NS:%d     ",bt.NSCount);
 			writer.WriteBuffer(c,10);
 			lcd.SetRegion(Lcd::Rect(0,90,100,15));
-			sprintf(c,"AS:%d",bt.ASCount);
+			sprintf(c,"AS:%d     ",bt.ASCount);
 			writer.WriteBuffer(c,10);
 			lcd.SetRegion(Lcd::Rect(0,105,100,15));
-			sprintf(c,"AR:%d",bt.ARCount);
+			sprintf(c,"AR:%d     ",bt.ARCount);
 			writer.WriteBuffer(c,10);
 			lcd.SetRegion(Lcd::Rect(0,120,100,15));
-			sprintf(c,"%d %d %d %d",bt.b1,bt.b2,bt.b3,bt.C);
+			sprintf(c,"%d     ",bt.errorc);
 			writer.WriteBuffer(c,10);
-			lcd.SetRegion(Lcd::Rect(0,135,100,15));
-			sprintf(c,"%d %d",bt.T.endingByte,bt.S.endingByte);
-			writer.WriteBuffer(c,10);
+
     	}
 
     }

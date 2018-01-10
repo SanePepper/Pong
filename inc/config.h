@@ -88,7 +88,7 @@ public:
     	//TODO: finish it
     	 Pit::Config pitConfig;
     	 pitConfig.channel = 0;
-    	 pitConfig.count = 75000*1000;//rmb to change back after checking
+    	 pitConfig.count = 75000*100;
     	 pitConfig.isr = isr;
     	 pitConfig.is_enable = true; //dont know if it's needed
     	 //Pit pit(pitConfig);

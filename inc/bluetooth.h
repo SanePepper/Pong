@@ -46,6 +46,11 @@ public:
     virtual void SendBuffer(const Byte *buff, const int &size){
     	m_bt.SendBuffer(buff, size);
     	send_time = libsc::System::Time();
+		errorc = 200;
+    	for (int i = 0; i < size; i++){
+    		s[i] = *(buff+i);
+    	}
+    	ss = size;\
     	//is_timer_enabled = is_waiting_ack;
     }
 

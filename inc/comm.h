@@ -48,6 +48,10 @@ public:
 	int NSCount = 0;
 	int ASCount = 0;
 	int ARCount = 0;
+	Byte r[5],s[5];
+	int ss,sr,sb,sc = 0;
+	int b1,errorc = 0;
+	Byte* pMsg;
 	/**
 	 * Special Byte for labeling end of package
 	 */
@@ -87,17 +91,9 @@ public:
 	 * tips: use a queue
 	 */
 	void SendPackage(const Package& pkg, bool need_ack = true){
-		if ((IsWaitingACK()) || (queue.size() > 0)){
-			queue.push_back(pkg);
-		}
-		else{
-			SendBuffer(&pkg.frame_id,sizeof(pkg));
-			NSCount++;
-			if (need_ack){
-				is_waiting_ack = true;
-				queue.push_back(pkg);
-				S = pkg;
-			}
+		queue.push_back(pkg);
+		if ((IsWaitingACK() == false) && (queue.size() == 1)){
+			SendFirst();
 		}
 	}
 
@@ -111,17 +107,33 @@ public:
 	 * You may want to parse the Byte array into packages
 	 */
 	bool Listener(const Byte* data, const size_t size){
-		//buffer.clear();
 		for (int i = 0; i < size; i++){
+			sr = size;
 			buffer.push_back(*(data+i));
-			if ((i == size - 1) && ((*(data+i) == BitConsts::kSTART) || (*(data+i) == BitConsts::kEND) || (*(data+i) == BitConsts::kACK))){
-				Tb = *(data+i);
-				//Tb = buffer[sizeof(buffer)-1];
-				BuildBufferPackage();
-				C++;
+			sb = buffer.size();
+			if (buffer.size() > 5){
+				buffer.erase(buffer.begin());
+			}
+			if((*(data+i) == BitConsts::kSTART) || (*(data+i) == BitConsts::kEND) || (*(data+i) == BitConsts::kACK)){
+				if (buffer.size() < 3){
+					buffer.clear();
+				}
+				else{
+					sc++;
+					b1 = buffer[1];
+					if (((buffer.size() == 3) && ((buffer[1] == 0) || (buffer[1] % 2 == 1)))
+							|| ((buffer.size() == 4) && ((buffer[1] == 2) || (buffer[1] == 4) || (buffer[1] == 10)))
+							|| ((buffer.size() == 5) && ((buffer[1] == 6) || (buffer[1] == 8)))){
+						sc++;
+						BuildBufferPackage();
+					}
+					else{
+						buffer.clear();
+					}
+				}
 			}
 		}
-		return 0;
+		return 1;
 	}
 
 	/**
@@ -149,15 +161,31 @@ protected:
 	 * deliver the first package in queue
 	 */
 	virtual void SendFirst(){
+		NSCount++;
 		if (queue.size() > 0){
-			SendBuffer(&queue[0].frame_id,sizeof(queue[0]));
-			NSCount++;
-			if (queue[0].type % 2 == 0){
-				is_waiting_ack = true;
-				//eByte = queue[0].endingByte;
+			if (IsWaitingACK()){
+				SendBuffer(pMsg, queue[0].data.size()+3);
 			}
 			else{
-				queue.erase(queue.begin());
+				if (queue[0].type % 2 == 0){
+					is_waiting_ack = true;
+				}
+				pMsg = new Byte[queue[0].data.size()+3];
+				memcpy(pMsg,&queue[0].frame_id,1);
+				memcpy(pMsg+1,&queue[0].type,1);
+				for (int i = 0; i < queue[0].data.size(); i++){
+					memcpy(pMsg+i+2,&queue[0].data[i],1);
+				}
+				memcpy(pMsg+queue[0].data.size()+2,&queue[0].endingByte,1);
+				SendBuffer(pMsg, queue[0].data.size()+3);
+				if (queue[0].type % 2 == 0){
+					is_waiting_ack = true;
+				}
+				else{
+					queue.erase(queue.begin());
+					delete pMsg;
+					pMsg = nullptr;
+				}
 			}
 		}
 	}
@@ -170,10 +198,7 @@ private:
 public:
 	//rx veriable
 	vector<Byte> buffer;	//temporary storage for incoming Bytes
-	Byte C = 0;
-	bool b1 = 0,b2 = 0,b3 = 0;
-	Package T,S;
-	Byte Tb;
+
 private:
 	/**
 	 * when the buffer contains a complete package bytes,
@@ -182,38 +207,43 @@ private:
 	 */
 
 	void BuildBufferPackage(){
+		for (int j = 0; j < buffer.size(); j++){if (j<5){r[j] = buffer[j];}}
 		Package receivedPkg;
 		receivedPkg.frame_id = buffer[0];
 		receivedPkg.type = static_cast<PkgType>(buffer[1]);
-		for (int i = 2; i < sizeof(receivedPkg)-1; i++){
-			receivedPkg.data.push_back(buffer[i]);
+		receivedPkg.data.clear();
+		for (int i = 0; i < buffer.size()-1; i++){
+			receivedPkg.data.push_back(buffer[i+2]);
 		}
-		receivedPkg.endingByte = buffer[sizeof(receivedPkg)-1];
-		T = receivedPkg;
+		receivedPkg.endingByte = buffer[buffer.size()-1];
 		buffer.clear();
 		Handler(receivedPkg);
-		C++;
-		b1 = (receivedPkg.endingByte == BitConsts::kSTART);
-		b2 = (receivedPkg.endingByte == BitConsts::kEND);
-		b3 = (receivedPkg.endingByte == BitConsts::kACK);
 		if (receivedPkg.endingByte == BitConsts::kACK){
 			is_waiting_ack = false;
+			delete pMsg;
+			pMsg = nullptr;
 			queue.erase(queue.begin());
 			SendFirst();
 			ARCount++;
+			receivedPkg.endingByte = 0; //dont know if its needed
 		}
 		else if ((receivedPkg.endingByte == BitConsts::kSTART) || (receivedPkg.endingByte == BitConsts::kEND)){
 			//send ack msg
+			ASCount++;
 			Package ackPkg;
 			ackPkg.frame_id = receivedPkg.frame_id;
 			ackPkg.type = static_cast<PkgType>(receivedPkg.type + 1);
 			ackPkg.data = {};
 			ackPkg.endingByte = BitConsts::kACK;
-			SendBuffer(&ackPkg.frame_id,sizeof(ackPkg));
-			ASCount++;
-			C++;
+			receivedPkg.endingByte = 0; //dont know if its needed
+			Byte* pAck = new Byte[3];
+			memcpy(pAck,&ackPkg.frame_id,1);
+			memcpy(pAck+1,&ackPkg.type,1);
+			memcpy(pAck+2,&ackPkg.endingByte,1);
+			SendBuffer(pAck,3);
+			delete pAck;
+			pAck = nullptr;
 		}
-
 	}
 };
 
