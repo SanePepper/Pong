@@ -48,9 +48,11 @@ public:
 	int NSCount = 0;
 	int ASCount = 0;
 	int ARCount = 0;
+	int DCount = 0;
+	int NCount = 0;
 	Byte r[5],s[5];
 	int ss,sr,sb,sc = 0;
-	int b1,errorc = 0;
+	int b1;
 	Byte* pMsg;
 	/**
 	 * Special Byte for labeling end of package
@@ -80,7 +82,10 @@ public:
 	/**
 	 * Constructor and destructor
 	 */
-	Comm():is_waiting_ack(false){}
+	Comm():is_waiting_ack(false){
+		queue.clear();
+		buffer.clear();
+	}
 	virtual ~Comm(){}
 
 	//TX helpers
@@ -92,7 +97,7 @@ public:
 	 */
 	void SendPackage(const Package& pkg, bool need_ack = true){
 		queue.push_back(pkg);
-		if ((IsWaitingACK() == false) && (queue.size() == 1)){
+		if ((IsWaitingACK() == false) && (queue.size() >= 1)){
 			SendFirst();
 		}
 	}
@@ -115,7 +120,7 @@ public:
 				buffer.erase(buffer.begin());
 			}
 			if((*(data+i) == BitConsts::kSTART) || (*(data+i) == BitConsts::kEND) || (*(data+i) == BitConsts::kACK)){
-				if (buffer.size() < 3){
+				if ((buffer.size() <= 3) && (*(data+i) == BitConsts::kEND)){
 					buffer.clear();
 				}
 				else{
@@ -127,9 +132,9 @@ public:
 						sc++;
 						BuildBufferPackage();
 					}
-					else{
-						buffer.clear();
-					}
+//					else{
+//						buffer.clear();
+//					}
 				}
 			}
 		}
@@ -161,15 +166,13 @@ protected:
 	 * deliver the first package in queue
 	 */
 	virtual void SendFirst(){
-		NSCount++;
 		if (queue.size() > 0){
+			NSCount++;
 			if (IsWaitingACK()){
 				SendBuffer(pMsg, queue[0].data.size()+3);
 			}
 			else{
-				if (queue[0].type % 2 == 0){
-					is_waiting_ack = true;
-				}
+				NCount++;
 				pMsg = new Byte[queue[0].data.size()+3];
 				memcpy(pMsg,&queue[0].frame_id,1);
 				memcpy(pMsg+1,&queue[0].type,1);
@@ -183,8 +186,9 @@ protected:
 				}
 				else{
 					queue.erase(queue.begin());
-					delete pMsg;
+					delete[] pMsg;
 					pMsg = nullptr;
+					DCount++;
 				}
 			}
 		}
@@ -212,17 +216,19 @@ private:
 		receivedPkg.frame_id = buffer[0];
 		receivedPkg.type = static_cast<PkgType>(buffer[1]);
 		receivedPkg.data.clear();
-		for (int i = 0; i < buffer.size()-1; i++){
-			receivedPkg.data.push_back(buffer[i+2]);
+		for (int i = 2; i < buffer.size()-1; i++){
+			receivedPkg.data.push_back(buffer[i]);
 		}
 		receivedPkg.endingByte = buffer[buffer.size()-1];
 		buffer.clear();
 		Handler(receivedPkg);
 		if (receivedPkg.endingByte == BitConsts::kACK){
 			is_waiting_ack = false;
-			delete pMsg;
+			delete[] pMsg;
 			pMsg = nullptr;
-			queue.erase(queue.begin());
+			DCount++;
+			//if (queue.size() >= 1)
+				queue.erase(queue.begin());
 			SendFirst();
 			ARCount++;
 			receivedPkg.endingByte = 0; //dont know if its needed
@@ -233,7 +239,7 @@ private:
 			Package ackPkg;
 			ackPkg.frame_id = receivedPkg.frame_id;
 			ackPkg.type = static_cast<PkgType>(receivedPkg.type + 1);
-			ackPkg.data = {};
+			ackPkg.data.clear();
 			ackPkg.endingByte = BitConsts::kACK;
 			receivedPkg.endingByte = 0; //dont know if its needed
 			Byte* pAck = new Byte[3];
@@ -241,7 +247,7 @@ private:
 			memcpy(pAck+1,&ackPkg.type,1);
 			memcpy(pAck+2,&ackPkg.endingByte,1);
 			SendBuffer(pAck,3);
-			delete pAck;
+			delete[] pAck;
 			pAck = nullptr;
 		}
 	}
