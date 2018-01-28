@@ -21,6 +21,7 @@
 #include "libsc/k60/jy_mcu_bt_106.h"
 #include "libbase/k60/pit.h"
 #include "libsc/k60/uart_device.h"
+#include "libsc/joystick.h"
 
 using libsc::Led;
 using libsc::Lcd;
@@ -31,6 +32,7 @@ using libsc::LcdConsole;
 using libsc::BatteryMeter;
 using libsc::k60::JyMcuBt106;
 using libbase::k60::Pit;
+using libsc::Joystick;
 
 class Config{
 public:
@@ -42,8 +44,13 @@ public:
 		return config;
 	}
 
-    static Joystick::Config GetJoystickConfig() {
+    static Joystick::Config GetJoystickConfig(Joystick::Listener isr) {
         //TODO: finish it
+    	Joystick::Config config;
+    	config.id = 0;
+    	config.is_active_low = true;
+    	config.dispatcher = isr;
+    	return config;
     }
 
     static St7735r::Config GetLcdConfig() {
@@ -51,7 +58,6 @@ public:
 		St7735r::Config config;
 		config.fps = 20;
 		config.is_bgr = false;
-		//config.is_revert = false;
 		return config;
     }
 
@@ -59,8 +65,8 @@ public:
 		LcdTypewriter::Config config;
 		config.is_clear_line = true;
 		config.is_text_wrap = true;
-		config.text_color = 0xFFFFFF;
-		config.bg_color = 0;
+		config.text_color = 0;
+		config.bg_color = 0xFFFF;
 		config.lcd = lcd;
 		return config;
 
@@ -68,8 +74,8 @@ public:
 
     static LcdConsole::Config GetConsoleConfig( St7735r* lcd){
 		LcdConsole::Config config;
-		config.bg_color = 0;
-		config.text_color = 0xFFFFFF;
+		config.bg_color = 0xFFFFFF;
+		config.text_color = 0;
 		config.region = Lcd::Rect(0, 0, 128, 160);
 		config.lcd = lcd;
 		return config;
@@ -88,7 +94,7 @@ public:
     	//TODO: finish it
     	 Pit::Config pitConfig;
     	 pitConfig.channel = 0;
-    	 pitConfig.count = 75000*100;
+    	 pitConfig.count = 75000*10;
     	 pitConfig.isr = isr;
     	 pitConfig.is_enable = true; //dont know if it's needed
     	 //Pit pit(pitConfig);

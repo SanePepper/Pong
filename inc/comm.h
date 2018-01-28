@@ -53,7 +53,7 @@ public:
 	Byte r[5],s[5];
 	int ss,sr,sb,sc = 0;
 	int b1;
-	Byte* pMsg;
+	Byte pMsg[5];
 	/**
 	 * Special Byte for labeling end of package
 	 */
@@ -121,6 +121,7 @@ public:
 			}
 			if((*(data+i) == BitConsts::kSTART) || (*(data+i) == BitConsts::kEND) || (*(data+i) == BitConsts::kACK)){
 				if ((buffer.size() <= 3) && (*(data+i) == BitConsts::kEND)){
+				//if ((buffer.size() < 3) || ((buffer.size() <= 3) && (*(data+i) == BitConsts::kEND))){
 					buffer.clear();
 				}
 				else{
@@ -173,21 +174,18 @@ protected:
 			}
 			else{
 				NCount++;
-				pMsg = new Byte[queue[0].data.size()+3];
-				memcpy(pMsg,&queue[0].frame_id,1);
-				memcpy(pMsg+1,&queue[0].type,1);
+				pMsg[0] = queue[0].frame_id;
+				pMsg[1] = queue[0].type;
 				for (int i = 0; i < queue[0].data.size(); i++){
-					memcpy(pMsg+i+2,&queue[0].data[i],1);
+					pMsg[i+2] = queue[0].data[i];
 				}
-				memcpy(pMsg+queue[0].data.size()+2,&queue[0].endingByte,1);
-				SendBuffer(pMsg, queue[0].data.size()+3);
+				pMsg[queue[0].data.size()+2] = queue[0].endingByte;
+				SendBuffer(&pMsg[0], queue[0].data.size()+3);
 				if (queue[0].type % 2 == 0){
 					is_waiting_ack = true;
 				}
 				else{
 					queue.erase(queue.begin());
-					delete[] pMsg;
-					pMsg = nullptr;
 					DCount++;
 				}
 			}
@@ -224,10 +222,8 @@ private:
 		Handler(receivedPkg);
 		if (receivedPkg.endingByte == BitConsts::kACK){
 			is_waiting_ack = false;
-			delete[] pMsg;
-			pMsg = nullptr;
 			DCount++;
-			//if (queue.size() >= 1)
+			if (queue.size() >= 1)
 				queue.erase(queue.begin());
 			SendFirst();
 			ARCount++;
@@ -242,13 +238,11 @@ private:
 			ackPkg.data.clear();
 			ackPkg.endingByte = BitConsts::kACK;
 			receivedPkg.endingByte = 0; //dont know if its needed
-			Byte* pAck = new Byte[3];
-			memcpy(pAck,&ackPkg.frame_id,1);
-			memcpy(pAck+1,&ackPkg.type,1);
-			memcpy(pAck+2,&ackPkg.endingByte,1);
-			SendBuffer(pAck,3);
-			delete[] pAck;
-			pAck = nullptr;
+			Byte pAck[3];
+			pAck[0] = ackPkg.frame_id;
+			pAck[1] = ackPkg.type;
+			pAck[2] = ackPkg.endingByte;
+			SendBuffer(&pAck[0],3);
 		}
 	}
 };

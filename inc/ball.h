@@ -7,13 +7,18 @@
 
 
 #include "sprite.h"
-#include "game_config.h"
+//#include "game_config.h"
 
 /**
  * Ball sprite for the Pong game.
  */
 class Ball: public Sprite {
 public:
+
+	Ball() : Sprite(5,5,0xFC40,0x0000){
+		Sprite::setPosition(0,0);
+	}
+
     explicit Ball(libsc::Lcd* pLcd);
 
     /**
@@ -21,17 +26,23 @@ public:
      * @param v_x Velocity in x direction.
      * @param v_y Velocity in y direction.
      */
-    void setVelocity(int v_x, int v_y);
+    void setVelocity(int v_x, int v_y){
+    	m_v_x = v_x;
+    	m_v_y = v_y;
+    }
 
     /**
      * Calculate movements for the next frame.
      */
-    void move();
+    void move(){
+    	m_position.x += m_v_x;
+    	m_position.y += m_v_y;
+    }
 
     /**
      * Renders the ball.
      */
-    void render() override;
+    void render() override{}
 
 private:
 
@@ -49,6 +60,7 @@ private:
      * Executes rebound logic.
      */
     void rebound();
+	//process ball hit wall, win condition, platform
 };
 
 

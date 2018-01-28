@@ -27,6 +27,18 @@ struct Coord {
  */
 class Sprite {
 public:
+//    void setConfig(int width, int height, uint16_t fg_color, uint16_t bg_color){
+//    	m_width = width;
+//    	m_height = height;
+//    	m_fg_color = fg_color;
+//    	m_bg_color = bg_color;
+//    }
+
+	Sprite(int width, int height, uint16_t fg_color, uint16_t bg_color)
+		: m_width(width), m_height(height), m_fg_color(fg_color), m_bg_color(bg_color){
+
+	}
+
     /**
      * A config structure for constructing a sprite.
      */
@@ -56,19 +68,26 @@ public:
      * @param x Position x.
      * @param y Position y.
      */
-    void setPosition(int x, int y);
+    void setPosition(int x, int y){
+    	m_position.x = x;
+    	m_position.y = y;
+    }
 
     /**
      * Sets position of sprite using a Coord.
      * @param coord Coordinate containing position x and y.
      */
-    void setPosition(Coord coord);
+    void setPosition(Coord coord){
+    	m_position = coord;
+    }
 
     /**
      * Gets position of the sprite.
      * @return position of sprite with Coord.
      */
-    Coord getPosition();
+    Coord getPosition(){
+    	return m_position;
+    }
 
 protected:
     /**
@@ -106,12 +125,12 @@ protected:
     /**
      * Draws the sprite in the new frame.
      */
-    virtual void draw();
+    virtual void draw(){}
 
     /**
      * Removes the sprite with the previous location in the new frame.
      */
-    virtual void clean();
+    virtual void clean(){}
 };
 
 

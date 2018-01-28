@@ -21,17 +21,18 @@
 #include "libsc/k60/jy_mcu_bt_106.h"
 #include "libbase/k60/pit.h"
 #include "libsc/lcd_typewriter.h"
+#include "libsc/joystick.h"
 
-#include "debug.h"
 #include "pong.h"
 #include "config.h"
 #include "bluetooth.h"
+#include "ball.h"
+#include "platform.h"
 
 namespace libbase
 {
     namespace k60
     {
-
         Mcg::Config Mcg::GetMcgConfig()
         {
             Mcg::Config config;
@@ -39,7 +40,6 @@ namespace libbase
             config.core_clock_khz = 150000;
             return config;
         }
-
     }
 }
 
@@ -55,8 +55,6 @@ bool Listener(const unsigned char*, const unsigned int){
 	return 1;
 }
 
-char *str = "";
-
 int main() {
     System::Init();
 
@@ -71,24 +69,15 @@ int main() {
     LcdConsole console(Config::GetConsoleConfig(&lcd));
     lcd.SetRegion(Lcd::Rect(0,0,128,160));
     writer.WriteString("YOU WIN!");
-    //Debug::message = "YO";
-    //Debug::pLcd = &lcd;
-    //Debug::pWriter = &writer;
-    //Debug::pConsole = &console;
 
     led0.SetEnable(1);
-    led1.SetEnable(1);
-    led2.SetEnable(1);
-    led3.SetEnable(1);
+    led1.SetEnable(0);
+    led2.SetEnable(0);
+    led3.SetEnable(0);
 
     Comm::Package pkg;
 
-    //lcd.FillColor(0xFFFFFF);
-
     Bluetooth bt;
-
-    //lcd.FillColor(0);
-
 
     bt.SetHandler([&led0,&led1,&led2,&led3,&bt,&pkg](Bluetooth::Package package){
     	pkg = package;
@@ -102,36 +91,45 @@ int main() {
     	}
     });
 
-    bt.SendPackage({57,Bluetooth::PkgType::kStart,{},Bluetooth::BitConsts::kSTART});
-    bt.SendPackage({0,Bluetooth::PkgType::kMasterPlatform,{7},Bluetooth::BitConsts::kEND});
-    bt.SendPackage({0,Bluetooth::PkgType::kSlavePlatform,{1},Bluetooth::BitConsts::kEND});
-    bt.SendPackage({0,Bluetooth::PkgType::kReflection,{1,2},Bluetooth::BitConsts::kEND});
-    bt.SendPackage({0,Bluetooth::PkgType::kLocation,{1,2},Bluetooth::BitConsts::kEND});
-    bt.SendPackage({0,Bluetooth::PkgType::kResult,{0},Bluetooth::BitConsts::kEND});
+	Joystick joystick(Config::GetJoystickConfig([](const uint8_t id, const Joystick::State state){
+		if (state == Joystick::State::kLeft){
+		}
+		else if (state == Joystick::State::kRight){
+		}
+	}));
+
+//    bt.SendPackage({57,Bluetooth::PkgType::kStartACK,{},Bluetooth::BitConsts::kACK},false);
+//    bt.SendPackage({57,Bluetooth::PkgType::kStart,{},Bluetooth::BitConsts::kSTART});
+//    bt.SendPackage({0,Bluetooth::PkgType::kMasterPlatform,{7},Bluetooth::BitConsts::kEND});
+//    bt.SendPackage({0,Bluetooth::PkgType::kSlavePlatform,{1},Bluetooth::BitConsts::kEND});
+//    bt.SendPackage({0,Bluetooth::PkgType::kReflection,{1,2},Bluetooth::BitConsts::kEND});
+//    bt.SendPackage({0,Bluetooth::PkgType::kLocation,{1,2},Bluetooth::BitConsts::kEND});
+//    bt.SendPackage({0,Bluetooth::PkgType::kResult,{0},Bluetooth::BitConsts::kEND});
 
 	int i = 0;
-	int num=0;
-	libsc::Timer::TimerInt time=libsc::System::Time();
+	libsc::Timer::TimerInt time = libsc::System::Time();
+
+	lcd.SetRegion(Lcd::Rect(0,0,128,160));
+	lcd.FillColor(0xFFFF);
+
+	Ball ball;
+	Platform opponentPlatform;
+	Platform yourPlatform;
+
     while(1){
-    	while(System::Time()!=time){
-    		time=libsc::System::Time();
-        	if(System::Time()%100==6){
-        	    //bt.SendPackage({0,Bluetooth::PkgType::kMasterPlatform,{7},Bluetooth::BitConsts::kEND});
-        	    bt.SendPackage({i,Bluetooth::PkgType::kStart,{},Bluetooth::BitConsts::kSTART});
-    ++num;
-    if(num==3){
-    	int i=0;
-    }
-        	    i = (i+1) % 255;
-        		led0.Switch();
-        		led1.Switch();
-        		led2.Switch();
-        		led3.Switch();
+    	while(System::Time() != time){
+    		time = libsc::System::Time();
+//    		if (System::Time() % 1000 == 0){
+//        	    bt.SendPackage({i,Bluetooth::PkgType::kStart,{},Bluetooth::BitConsts::kSTART});
+//        	    i = (i+1) % 256;
+//    		}
+        	if(System::Time()%100 == 0){
     			char c[10];
     			lcd.SetRegion(Lcd::Rect(0,0,100,15));
     			if(bt.IsWaitingACK()){
     				writer.WriteString("waiting");
-    			}else{
+    			}
+    			else{
     				writer.WriteString("not waiting");
     			}
     			lcd.SetRegion(Lcd::Rect(0,15,100,15));
@@ -148,7 +146,7 @@ int main() {
     //			sprintf(c,"%d %d %d %d %d   ",bt.ss,bt.sr,bt.sb,bt.sc,bt.b1);
     //			writer.WriteBuffer(c,10);
     			lcd.SetRegion(Lcd::Rect(0,60,100,15));
-    			sprintf(c,"NS:%d     ",System::Time());
+    			sprintf(c,"%d     ",System::Time());
     			writer.WriteBuffer(c,10);
     			lcd.SetRegion(Lcd::Rect(0,75,100,15));
     			sprintf(c,"NS:%d     ",bt.NSCount);
@@ -165,6 +163,16 @@ int main() {
     			lcd.SetRegion(Lcd::Rect(0,135,100,15));
     			sprintf(c,"N:%d     ",bt.NCount);
     			writer.WriteBuffer(c,10);
+
+    			//Fill the border
+    			lcd.SetRegion(Lcd::Rect(4,5,120,1));
+    			lcd.FillColor(0x0000);
+    			lcd.SetRegion(Lcd::Rect(4,5,1,150));
+    			lcd.FillColor(0x0000);
+    			lcd.SetRegion(Lcd::Rect(124,5,1,150));
+    			lcd.FillColor(0x0000);
+    			lcd.SetRegion(Lcd::Rect(4,155,120,1));
+    			lcd.FillColor(0x0000);
         	}
     	}
     }
