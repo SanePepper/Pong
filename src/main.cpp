@@ -91,78 +91,36 @@ int main() {
     	}
     });
 
-	Joystick joystick(Config::GetJoystickConfig([](const uint8_t id, const Joystick::State state){
+	Ball ball(Config::GetBallConfig(&lcd));
+	Platform opponentPlatform(Config::GetPlatformConfig(&lcd,false));
+	Platform yourPlatform(Config::GetPlatformConfig(&lcd,true));
+
+	Joystick joystick(Config::GetJoystickConfig([&yourPlatform](const uint8_t id, const Joystick::State state){
 		if (state == Joystick::State::kLeft){
+			yourPlatform.moveLeft();
 		}
 		else if (state == Joystick::State::kRight){
+			yourPlatform.moveRight();
 		}
 	}));
 
-//    bt.SendPackage({57,Bluetooth::PkgType::kStartACK,{},Bluetooth::BitConsts::kACK},false);
-//    bt.SendPackage({57,Bluetooth::PkgType::kStart,{},Bluetooth::BitConsts::kSTART});
-//    bt.SendPackage({0,Bluetooth::PkgType::kMasterPlatform,{7},Bluetooth::BitConsts::kEND});
-//    bt.SendPackage({0,Bluetooth::PkgType::kSlavePlatform,{1},Bluetooth::BitConsts::kEND});
-//    bt.SendPackage({0,Bluetooth::PkgType::kReflection,{1,2},Bluetooth::BitConsts::kEND});
-//    bt.SendPackage({0,Bluetooth::PkgType::kLocation,{1,2},Bluetooth::BitConsts::kEND});
-//    bt.SendPackage({0,Bluetooth::PkgType::kResult,{0},Bluetooth::BitConsts::kEND});
-
-	int i = 0;
 	libsc::Timer::TimerInt time = libsc::System::Time();
 
 	lcd.SetRegion(Lcd::Rect(0,0,128,160));
 	lcd.FillColor(0xFFFF);
 
-	Ball ball;
-	Platform opponentPlatform;
-	Platform yourPlatform;
-
     while(1){
     	while(System::Time() != time){
     		time = libsc::System::Time();
-//    		if (System::Time() % 1000 == 0){
-//        	    bt.SendPackage({i,Bluetooth::PkgType::kStart,{},Bluetooth::BitConsts::kSTART});
-//        	    i = (i+1) % 256;
-//    		}
-        	if(System::Time()%100 == 0){
-    			char c[10];
-    			lcd.SetRegion(Lcd::Rect(0,0,100,15));
-    			if(bt.IsWaitingACK()){
-    				writer.WriteString("waiting");
-    			}
-    			else{
-    				writer.WriteString("not waiting");
-    			}
-    			lcd.SetRegion(Lcd::Rect(0,15,100,15));
-    			sprintf(c,"Qsize:%d",bt.queue.size());
-    			writer.WriteBuffer(c,10);
+        	if(time % 50 == 0){
+//        		//Fill the background color
+//    			lcd.SetRegion(Lcd::Rect(0,0,128,160));
+//    			lcd.FillColor(0xFFFF);
 
-    			lcd.SetRegion(Lcd::Rect(0,30,100,15));
-    			sprintf(c,"%d %d %d %d %d",bt.s[0],bt.s[1],bt.s[2],bt.s[3],bt.s[4]);
-    			writer.WriteBuffer(c,10);
-    			lcd.SetRegion(Lcd::Rect(0,45,100,15));
-    			sprintf(c,"%d %d %d %d %d",bt.r[0],bt.r[1],bt.r[2],bt.r[3],bt.r[4]);
-    			writer.WriteBuffer(c,10);
-    //			lcd.SetRegion(Lcd::Rect(0,60,100,15));
-    //			sprintf(c,"%d %d %d %d %d   ",bt.ss,bt.sr,bt.sb,bt.sc,bt.b1);
-    //			writer.WriteBuffer(c,10);
-    			lcd.SetRegion(Lcd::Rect(0,60,100,15));
-    			sprintf(c,"%d     ",System::Time());
-    			writer.WriteBuffer(c,10);
-    			lcd.SetRegion(Lcd::Rect(0,75,100,15));
-    			sprintf(c,"NS:%d     ",bt.NSCount);
-    			writer.WriteBuffer(c,10);
-    			lcd.SetRegion(Lcd::Rect(0,90,100,15));
-    			sprintf(c,"AS:%d     ",bt.ASCount);
-    			writer.WriteBuffer(c,10);
-    			lcd.SetRegion(Lcd::Rect(0,105,100,15));
-    			sprintf(c,"AR:%d     ",bt.ARCount);
-    			writer.WriteBuffer(c,10);
-    			lcd.SetRegion(Lcd::Rect(0,120,100,15));
-    			sprintf(c,"D:%d     ",bt.DCount);
-    			writer.WriteBuffer(c,10);
-    			lcd.SetRegion(Lcd::Rect(0,135,100,15));
-    			sprintf(c,"N:%d     ",bt.NCount);
-    			writer.WriteBuffer(c,10);
+    			//draw the ball and platforms
+    			ball.render();
+    			opponentPlatform.render();
+    			yourPlatform.render();
 
     			//Fill the border
     			lcd.SetRegion(Lcd::Rect(4,5,120,1));

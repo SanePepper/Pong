@@ -35,9 +35,7 @@ public:
 //    }
 
 	Sprite(int width, int height, uint16_t fg_color, uint16_t bg_color)
-		: m_width(width), m_height(height), m_fg_color(fg_color), m_bg_color(bg_color){
-
-	}
+		: m_width(width), m_height(height), m_fg_color(fg_color), m_bg_color(bg_color){}
 
     /**
      * A config structure for constructing a sprite.
@@ -56,7 +54,9 @@ public:
      * Constructor of sprite which accepts a sprite config.
      * @param config Config object to initialize default values.
      */
-    explicit Sprite(Config config);
+    explicit Sprite(Config config) : m_fg_color(config.fg_color), m_bg_color(config.bg_color), m_width(config.width), m_height(config.height), m_pLcd(config.pLcd) {
+    	setPosition(config.x, config.y);
+    }
 
     /**
      * Renders the sprite

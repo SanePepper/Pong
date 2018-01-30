@@ -7,6 +7,7 @@
 
 
 #include "sprite.h"
+#include "config.h"
 //#include "game_config.h"
 
 /**
@@ -15,11 +16,9 @@
 class Ball: public Sprite {
 public:
 
-	Ball() : Sprite(5,5,0xFC40,0x0000){
-		Sprite::setPosition(0,0);
-	}
 
-    explicit Ball(libsc::Lcd* pLcd);
+//    explicit Ball(libsc::Lcd* pLcd) : Sprite(Config::GetSpriteConfig(0xFC40, 0xFFFF, 5, 5, 64, 80, pLcd)){
+    explicit Ball(Config config) : Sprite(config){}
 
     /**
      * Sets velocity of the ball.
@@ -39,10 +38,24 @@ public:
     	m_position.y += m_v_y;
     }
 
+    void draw(){
+	    this->m_pLcd->SetRegion(Lcd::Rect(m_position.x-m_width/2, m_position.y-m_height/2, m_width, m_height));
+	    this->m_pLcd->FillColor(m_fg_color);
+    }
+
+    void clear(){
+	    this->m_pLcd->SetRegion(Lcd::Rect(m_position.x-m_width/2, m_position.y-m_height/2, m_width, m_height));
+	    this->m_pLcd->FillColor(m_bg_color);
+    }
+
     /**
      * Renders the ball.
      */
-    void render() override{}
+    void render() override{
+    	clear();
+    	//change position of the entity
+    	draw();
+    }
 
 private:
 

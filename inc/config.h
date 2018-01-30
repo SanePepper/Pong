@@ -22,6 +22,7 @@
 #include "libbase/k60/pit.h"
 #include "libsc/k60/uart_device.h"
 #include "libsc/joystick.h"
+#include "sprite.h"
 
 using libsc::Led;
 using libsc::Lcd;
@@ -99,6 +100,36 @@ public:
     	 pitConfig.is_enable = true; //dont know if it's needed
     	 //Pit pit(pitConfig);
     	 return pitConfig;
+    }
+
+    static Sprite::Config GetBallConfig(Lcd* pLcd){
+    	Sprite::Config config;
+    	config.fg_color = 0xFC20;
+    	config.bg_color = 0xFFFF;
+    	config.width = 5;
+    	config.height = 5;
+    	config.x = 64;
+    	config.y = 80;
+    	config.pLcd = pLcd;
+    	return config;
+    }
+
+    static Sprite::Config GetPlatformConfig(Lcd* pLcd, bool yours){
+    	Sprite::Config config;
+    	config.fg_color = 0x0000;
+    	config.bg_color = 0xFFFF;
+    	config.width = 30;
+    	config.height = 4;
+    	if (yours){
+    		config.x = 48;
+    		config.y = 148;
+    	}
+    	else{
+    		config.x = 48;
+    		config.y = 8;
+    	}
+    	config.pLcd = pLcd;
+    	return config;
     }
 
 };

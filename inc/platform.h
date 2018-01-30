@@ -15,30 +15,45 @@
 class Platform: public Sprite {
 public:
 
-	Platform() : Sprite(30,4,0x0000,0xFFFF) {}
-
-    explicit Platform(libsc::Lcd* pLcd);
+    explicit Platform(Config config):Sprite(config){}
 
     /**
      * Moves the platform one step to the left.
      */
     void moveLeft(){
-    	m_position.x -= 4;
-    	m_position.x < 4? 4: m_position.x;
+    	if (m_position.x-4 >= 4){
+        	clear();
+    		m_position.x -= 4;
+    	}
     }
 
     /**
      * Moves the platform one step to the right.
      */
     void moveRight(){
-    	m_position.x += 4;
-    	m_position.x > 124? 124: m_position.x;
+    	if (m_position.x+30+4 <= 124){
+        	clear();
+    		m_position.x += 4;
+    	}
     }
 
+    void draw(){
+	    this->m_pLcd->SetRegion(Lcd::Rect(m_position.x, m_position.y, m_width, m_height));
+	    this->m_pLcd->FillColor(m_fg_color);
+    }
+
+    void clear(){
+	    this->m_pLcd->SetRegion(Lcd::Rect(m_position.x, m_position.y, m_width, m_height));
+	    this->m_pLcd->FillColor(m_bg_color);
+    }
     /**
      * Renders the platform.
      */
-    void render() override{}
+    void render() override{
+    	clear();
+    	//computation
+    	draw();
+    }
 
 };
 
