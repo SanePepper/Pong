@@ -95,12 +95,18 @@ int main() {
 	Platform opponentPlatform(Config::GetPlatformConfig(&lcd,false));
 	Platform yourPlatform(Config::GetPlatformConfig(&lcd,true));
 
-	Joystick joystick(Config::GetJoystickConfig([&yourPlatform](const uint8_t id, const Joystick::State state){
+	Joystick joystick(Config::GetJoystickConfig([&yourPlatform, &opponentPlatform](const uint8_t id, const Joystick::State state){
 		if (state == Joystick::State::kLeft){
 			yourPlatform.moveLeft();
 		}
 		else if (state == Joystick::State::kRight){
 			yourPlatform.moveRight();
+		}
+		else if (state == Joystick::State::kUp){
+			opponentPlatform.moveLeft();
+		}
+		else if (state == Joystick::State::kDown){
+			opponentPlatform.moveRight();
 		}
 	}));
 
@@ -109,13 +115,13 @@ int main() {
 	lcd.SetRegion(Lcd::Rect(0,0,128,160));
 	lcd.FillColor(0xFFFF);
 
-    while(1){
+	bool end_game = false;
+
+    while(!end_game){
     	while(System::Time() != time){
     		time = libsc::System::Time();
-        	if(time % 50 == 0){
-//        		//Fill the background color
-//    			lcd.SetRegion(Lcd::Rect(0,0,128,160));
-//    			lcd.FillColor(0xFFFF);
+        	if(time % 100 == 0){
+        		ball.move(yourPlatform.getPosition().x, opponentPlatform.getPosition().x);
 
     			//draw the ball and platforms
     			ball.render();

@@ -50,7 +50,7 @@ public:
      * Renders the platform.
      */
     void render() override{
-    	clear();
+//    	clear();
     	//computation
     	draw();
     }
