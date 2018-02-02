@@ -116,24 +116,24 @@ int main() {
     	while(System::Time()!=time){
     		time=libsc::System::Time();
         	if(System::Time()%100==6){
-        	    //bt.SendPackage({0,Bluetooth::PkgType::kMasterPlatform,{7},Bluetooth::BitConsts::kEND});
-        	    bt.SendPackage({i,Bluetooth::PkgType::kStart,{},Bluetooth::BitConsts::kSTART});
-    ++num;
-    if(num==3){
-    	int i=0;
-    }
-        	    i = (i+1) % 255;
-        		led0.Switch();
-        		led1.Switch();
-        		led2.Switch();
-        		led3.Switch();
+//        	    //bt.SendPackage({0,Bluetooth::PkgType::kMasterPlatform,{7},Bluetooth::BitConsts::kEND});
+//        	    //bt.SendPackage({i,Bluetooth::PkgType::kStart,{},Bluetooth::BitConsts::kSTART});
+//				++num;
+//				if(num==3){
+//					int i=0;
+//				}
+//        	    i = (i+1) % 255;
+//        		led0.Switch();
+//        		led1.Switch();
+//        		led2.Switch();
+//        		led3.Switch();
     			char c[10];
-    			lcd.SetRegion(Lcd::Rect(0,0,100,15));
-    			if(bt.IsWaitingACK()){
-    				writer.WriteString("waiting");
-    			}else{
-    				writer.WriteString("not waiting");
-    			}
+//    			lcd.SetRegion(Lcd::Rect(0,0,100,15));
+//    			if(bt.IsWaitingACK()){
+//    				writer.WriteString("waiting");
+//    			}else{
+//    				writer.WriteString("not waiting");
+//    			}
     			lcd.SetRegion(Lcd::Rect(0,15,100,15));
     			sprintf(c,"Qsize:%d",bt.queue.size());
     			writer.WriteBuffer(c,10);
@@ -148,7 +148,7 @@ int main() {
     //			sprintf(c,"%d %d %d %d %d   ",bt.ss,bt.sr,bt.sb,bt.sc,bt.b1);
     //			writer.WriteBuffer(c,10);
     			lcd.SetRegion(Lcd::Rect(0,60,100,15));
-    			sprintf(c,"NS:%d     ",System::Time());
+    			sprintf(c,"%d     ",System::Time());
     			writer.WriteBuffer(c,10);
     			lcd.SetRegion(Lcd::Rect(0,75,100,15));
     			sprintf(c,"NS:%d     ",bt.NSCount);
