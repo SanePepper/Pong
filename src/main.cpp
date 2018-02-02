@@ -28,6 +28,7 @@
 #include "bluetooth.h"
 #include "ball.h"
 #include "platform.h"
+#include "score.h"
 
 namespace libbase
 {
@@ -55,6 +56,12 @@ bool Listener(const unsigned char*, const unsigned int){
 	return 1;
 }
 
+enum Game_role{
+	Not_started = 0,
+	Master,
+	Slave
+};
+
 int main() {
     System::Init();
 
@@ -79,34 +86,38 @@ int main() {
 
     Bluetooth bt;
 
-    bt.SetHandler([&led0,&led1,&led2,&led3,&bt,&pkg](Bluetooth::Package package){
+    Game_role role = Not_started;
+    bool start = false;
+
+    bt.SetHandler([&led0,&led1,&led2,&led3,&bt,&pkg,&start,&role](Bluetooth::Package package){
     	pkg = package;
     	switch((int)package.type){
     	case Bluetooth::PkgType::kStart:
-    		led0.Switch();
-				break;
+    		led2.Switch();
+    		role = Slave;
+			break;
     	case Bluetooth::PkgType::kStartACK:
     		led1.Switch();
+    		start = true;
     		break;
     	}
     });
 
-	Ball ball(Config::GetBallConfig(&lcd));
+	Pong pong;
+	Score score;
+	Ball ball(Config::GetBallConfig(&lcd), &score);
 	Platform opponentPlatform(Config::GetPlatformConfig(&lcd,false));
 	Platform yourPlatform(Config::GetPlatformConfig(&lcd,true));
 
-	Joystick joystick(Config::GetJoystickConfig([&yourPlatform, &opponentPlatform](const uint8_t id, const Joystick::State state){
-		if (state == Joystick::State::kLeft){
-			yourPlatform.moveLeft();
+	Joystick::State joystickDir = Joystick::State::kIdle;
+	bool startClick = false;
+	Joystick joystick(Config::GetJoystickConfig([&startClick, &joystickDir, &role](const uint8_t id, const Joystick::State state){
+		if (state == Joystick::State::kLeft || state == Joystick::State::kRight){
+			startClick = !startClick;
+			joystickDir = state;
 		}
-		else if (state == Joystick::State::kRight){
-			yourPlatform.moveRight();
-		}
-		else if (state == Joystick::State::kUp){
-			opponentPlatform.moveLeft();
-		}
-		else if (state == Joystick::State::kDown){
-			opponentPlatform.moveRight();
+		else if (state == Joystick::State::kSelect){
+			role = Master;
 		}
 	}));
 
@@ -117,28 +128,59 @@ int main() {
 
 	bool end_game = false;
 
-    while(!end_game){
-    	while(System::Time() != time){
-    		time = libsc::System::Time();
-        	if(time % 100 == 0){
-        		ball.move(yourPlatform.getPosition().x, opponentPlatform.getPosition().x);
+	while (role == Not_started){}
+	writer.WriteString("start");
 
-    			//draw the ball and platforms
-    			ball.render();
-    			opponentPlatform.render();
-    			yourPlatform.render();
+	if (role == Master){
+		writer.WriteString("master");
+		ball.render();
+		yourPlatform.render();
+		opponentPlatform.render();
+		pong.drawBorder(&lcd);
+		System::DelayS(2);
+		bt.SendPackage({0,Bluetooth::PkgType::kStart,{},Bluetooth::BitConsts::kSTART},true);
+		led2.Switch();
+		//wait for ack
+		while (!start){}
+	}
 
-    			//Fill the border
-    			lcd.SetRegion(Lcd::Rect(4,5,120,1));
-    			lcd.FillColor(0x0000);
-    			lcd.SetRegion(Lcd::Rect(4,5,1,150));
-    			lcd.FillColor(0x0000);
-    			lcd.SetRegion(Lcd::Rect(124,5,1,150));
-    			lcd.FillColor(0x0000);
-    			lcd.SetRegion(Lcd::Rect(4,155,120,1));
-    			lcd.FillColor(0x0000);
-        	}
-    	}
-    }
+	if (role == Slave){
+		writer.WriteString("slave");
+		ball.render();
+		yourPlatform.render();
+		opponentPlatform.render();
+		pong.drawBorder(&lcd);
+	}
+
+	while(!end_game){
+		while(System::Time() != time){
+			time = libsc::System::Time();
+			if(time % 50 == 0){
+				if (startClick){
+					if (joystickDir == Joystick::State::kLeft){
+						yourPlatform.moveLeft();
+					}
+					else if (joystickDir == Joystick::State::kRight){
+						yourPlatform.moveRight();
+					}
+				}
+				pong.oneFrame(&lcd, &ball, &yourPlatform, &opponentPlatform, &time, &score);
+//        		if (libsc::Timer::TimeDiff(time, score.getTime()) >= 2000){
+//        			pong.oneFrame(&lcd, &ball, &yourPlatform, &opponentPlatform);
+//        		}
+				if (score.getWin() == 3){
+					end_game = true;
+					//you win lcd typewriter
+				}
+				else if (score.getLose() == 3){
+					end_game = true;
+					//you lose lcd typewriter
+				}
+			}
+		}
+	}
+
+    //prevent return 0
+    while (true){}
     return 0;
 }

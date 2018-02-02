@@ -50,7 +50,17 @@ public:
     	Joystick::Config config;
     	config.id = 0;
     	config.is_active_low = true;
-    	config.dispatcher = isr;
+//    	config.dispatcher = isr;
+    	config.handlers[0] = isr;
+    	config.handlers[1] = isr;
+    	config.handlers[2] = isr;
+    	config.handlers[3] = isr;
+    	config.handlers[4] = isr;
+    	config.listener_triggers[0] = Joystick::Config::Trigger::kBoth;
+    	config.listener_triggers[1] = Joystick::Config::Trigger::kBoth;
+    	config.listener_triggers[2] = Joystick::Config::Trigger::kBoth;
+    	config.listener_triggers[3] = Joystick::Config::Trigger::kBoth;
+    	config.listener_triggers[4] = Joystick::Config::Trigger::kBoth;
     	return config;
     }
 
@@ -58,7 +68,6 @@ public:
         //TODO: finish it
 		St7735r::Config config;
 		config.fps = 20;
-		config.is_bgr = false;
 		return config;
     }
 
@@ -70,7 +79,6 @@ public:
 		config.bg_color = 0xFFFF;
 		config.lcd = lcd;
 		return config;
-
     }
 
     static LcdConsole::Config GetConsoleConfig( St7735r* lcd){
@@ -80,8 +88,8 @@ public:
 		config.region = Lcd::Rect(0, 0, 128, 160);
 		config.lcd = lcd;
 		return config;
-
     }
+
     static JyMcuBt106::Config GetBluetoothConfig(std::function<bool(const Byte *data, const size_t size)> isr) {
         //TODO: finish it
     	JyMcuBt106::Config config;

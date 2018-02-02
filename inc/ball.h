@@ -9,7 +9,7 @@
 #include "sprite.h"
 #include "config.h"
 #include <libsc/system.h>
-//#include "game_config.h"
+#include "score.h"
 
 /**
  * Ball sprite for the Pong game.
@@ -17,8 +17,7 @@
 class Ball: public Sprite {
 public:
 
-//    explicit Ball(libsc::Lcd* pLcd) : Sprite(Config::GetSpriteConfig(0xFC40, 0xFFFF, 5, 5, 64, 80, pLcd)){
-    explicit Ball(Config config) : Sprite(config){}
+    explicit Ball(Config config, Score* score) : Sprite(config), pScore(score){}
 
     /**
      * Sets velocity of the ball.
@@ -38,6 +37,7 @@ public:
     	m_position.x += m_v_x;
     	m_position.y += m_v_y;
     	rebound(yourPlatform_x, opponentPlatform_x);
+    	draw();
     }
 
     void draw(){
@@ -75,6 +75,7 @@ private:
 
     int lose = 0;
 
+    Score* pScore = nullptr;
     /**
      * Executes rebound logic.
      */
@@ -116,30 +117,23 @@ private:
     		setVelocity(new_v_x,-m_v_y);
     	}
     	if (m_position.y < 5 || m_position.y > 154){
+    		Score score;
 			if (m_position.y < 5){
 				//you win this round
-				this->m_pLcd->SetRegion(Lcd::Rect(116-win*10,156,6,4));
+				this->m_pLcd->SetRegion(Lcd::Rect(116-pScore->getWin()*10,156,6,4));
 				this->m_pLcd->FillColor(0x0EE0);
-				win++;
-//				if (win == 3){
-//					end_game = true;
-//				}
+				pScore->Win();
 			}
 			if (m_position.y > 154){
 				//you lose this round
-				this->m_pLcd->SetRegion(Lcd::Rect(116-lose*10,0,6,4));
+				this->m_pLcd->SetRegion(Lcd::Rect(116-pScore->getLose()*10,0,6,4));
 				this->m_pLcd->FillColor(0x0EE0);
-				lose++;
-//				if (lose == 3){
-//					end_game = true;
-//				}
+				pScore->Lose();
 			}
 			setPosition(64,80);
 			setVelocity(-4,7);
-			libsc::System::DelayS(2);
     	}
     }
-	//process ball hit wall, win condition, platform
 };
 
 

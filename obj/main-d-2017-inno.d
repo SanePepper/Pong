@@ -32,7 +32,8 @@ obj/main-d-2017-inno.o: src/main.cpp \
  C:\Users\pwc02\git\libsccc\inc/libbase/k60/adc.h \
  C:\Users\pwc02\git\libsccc\inc/libbase/k60/pit.h \
  C:\Users\pwc02\git\libsccc\inc/libsc/lcd_typewriter.h inc/pong.h \
- inc/config.h C:\Users\pwc02\git\libsccc\inc/libsc/lcd_console.h \
- C:\Users\pwc02\git\libsccc\inc/libutil/misc.h inc/sprite.h \
- inc/bluetooth.h inc/comm.h inc/debug.h inc/bluetooth.h inc/config.h \
- inc/ball.h inc/platform.h
+ inc/ball.h inc/sprite.h inc/config.h \
+ C:\Users\pwc02\git\libsccc\inc/libsc/lcd_console.h \
+ C:\Users\pwc02\git\libsccc\inc/libutil/misc.h inc/score.h inc/platform.h \
+ inc/bluetooth.h inc/comm.h inc/debug.h inc/config.h inc/bluetooth.h \
+ inc/ball.h inc/platform.h inc/score.h
