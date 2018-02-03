@@ -17,6 +17,11 @@ public:
 
     explicit Platform(Config config):Sprite(config){}
 
+    void setX(Byte x){
+    	clear();
+    	m_position.x = x;
+    }
+
     /**
      * Moves the platform one step to the left.
      */
@@ -50,8 +55,6 @@ public:
      * Renders the platform.
      */
     void render() override{
-//    	clear();
-    	//computation
     	draw();
     }
 

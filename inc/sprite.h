@@ -14,12 +14,12 @@
  * Coordinate data.
  */
 struct Coord {
-    int x;
-    int y;
+    Byte x;
+    Byte y;
 
     Coord(): x(0), y(0) {}
 
-    Coord(int _x, int _y): x(_x), y(_y) {}
+    Coord(Byte _x, Byte _y): x(_x), y(_y) {}
 };
 
 /**
@@ -45,8 +45,8 @@ public:
         uint16_t bg_color = 0xFFFF;
         unsigned int width = 10;
         unsigned int height = 10;
-        int x = 10;
-        int y = 10;
+        Byte x = 10;
+        Byte y = 10;
         libsc::Lcd* pLcd = nullptr;
     };
 
@@ -68,7 +68,7 @@ public:
      * @param x Position x.
      * @param y Position y.
      */
-    void setPosition(int x, int y){
+    void setPosition(Byte x, Byte y){
     	m_position.x = x;
     	m_position.y = y;
     }

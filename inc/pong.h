@@ -18,9 +18,10 @@
 class Pong{
 public:
 
-	void oneFrame(libsc::St7735r* pLcd, Ball* pBall, Platform* pYourPlatform, Platform* pOpponentPlatform, libsc::Timer::TimerInt* time, Score* pScore){
+	bool oneFrame(libsc::St7735r* pLcd, Ball* pBall, Platform* pYourPlatform, Platform* pOpponentPlatform, libsc::Timer::TimerInt* time, Score* pScore){
+		bool return_val = false;
 		if (libsc::Timer::TimeDiff(*time, pScore->getTime()) >= 2000){
-			pBall->move(pYourPlatform->getPosition().x, pOpponentPlatform->getPosition().x);
+			return_val = pBall->move(pYourPlatform->getPosition().x, pOpponentPlatform->getPosition().x);
 		}
 		else{
 			pBall->render();
@@ -39,6 +40,7 @@ public:
 		pLcd->FillColor(0x0000);
 		pLcd->SetRegion(Lcd::Rect(4,155,120,1));
 		pLcd->FillColor(0x0000);
+		return return_val;
 	}
 
 	void drawBorder(libsc::St7735r* pLcd){

@@ -24,20 +24,28 @@ public:
      * @param v_x Velocity in x direction.
      * @param v_y Velocity in y direction.
      */
-    void setVelocity(int v_x, int v_y){
+    void setVelocity(int8_t v_x, int8_t v_y){
     	m_v_x = v_x;
     	m_v_y = v_y;
+    }
+
+    std::pair<int8_t,int8_t> getVelocity(){
+    	std::pair<int8_t,int8_t>temp;
+    	temp.first = m_v_x;
+    	temp.second = m_v_y;
+    	return temp;
     }
 
     /**
      * Calculate movements for the next frame.
      */
-    void move(int yourPlatform_x, int opponentPlatform_x){
+    bool move(Byte yourPlatform_x, Byte opponentPlatform_x){
     	clear();
     	m_position.x += m_v_x;
     	m_position.y += m_v_y;
-    	rebound(yourPlatform_x, opponentPlatform_x);
+    	bool return_val = rebound(yourPlatform_x, opponentPlatform_x);
     	draw();
+    	return return_val;
     }
 
     void draw(){
@@ -64,12 +72,12 @@ private:
     /**
      * Velocity in X direction of the ball in pixels.
      */
-    int m_v_x = -4;
+    int8_t m_v_x = -4;
 
     /**
      * Velocity in Y direction of the ball in pixels.
      */
-    int m_v_y = 7;
+    int8_t m_v_y = 7;
 
     int win = 0;
 
@@ -79,7 +87,7 @@ private:
     /**
      * Executes rebound logic.
      */
-    void rebound(int yourPlatform_x, int opponentPlatform_x){
+    bool rebound(int yourPlatform_x, int opponentPlatform_x){
     	//hit wall
     	int contactPoint_x, contactPoint_y, dx, dy, px, py;
     	px = m_position.x - m_v_x;
@@ -97,6 +105,7 @@ private:
        		m_position.x = contactPoint_x + ((m_v_x-dx)/m_v_x)*(-m_v_x);
        		m_position.y = contactPoint_y + ((m_v_y-dy)/m_v_y)*(m_v_y);
     		setVelocity(-m_v_x,m_v_y);
+    		return true;
     	}
     	//hit platform
     	if((m_position.y < 11 && opponentPlatform_x <= px && px <= opponentPlatform_x + 29) || (m_position.y > 148 && yourPlatform_x <= px && px <= yourPlatform_x + 29)){ // && (m_position.x >= )
@@ -115,6 +124,7 @@ private:
        		m_position.x = contactPoint_x + ((m_v_x-dx)/m_v_x)*(new_v_x);
        		m_position.y = contactPoint_y + ((m_v_y-dy)/m_v_y)*(-m_v_y);
     		setVelocity(new_v_x,-m_v_y);
+    		return true;
     	}
     	if (m_position.y < 5 || m_position.y > 154){
     		Score score;
@@ -133,6 +143,7 @@ private:
 			setPosition(64,80);
 			setVelocity(-4,7);
     	}
+    	return false;
     }
 };
 

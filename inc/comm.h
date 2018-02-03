@@ -24,7 +24,7 @@
 using std::vector;
 using std::function;
 
-class Pong;
+//class Pong;
 
 class Comm {
 public:
