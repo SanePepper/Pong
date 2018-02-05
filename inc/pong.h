@@ -21,13 +21,11 @@ public:
 	bool oneFrame(libsc::St7735r* pLcd, Ball* pBall, Platform* pYourPlatform, Platform* pOpponentPlatform, libsc::Timer::TimerInt* time, Score* pScore){
 		bool return_val = false;
 		if (libsc::Timer::TimeDiff(*time, pScore->getTime()) >= 2000){
-			return_val = pBall->move(pYourPlatform->getPosition().x, pOpponentPlatform->getPosition().x);
+			return_val = pBall->move(pYourPlatform->getX(), pOpponentPlatform->getX());
 		}
 		else{
 			pBall->render();
 		}
-		//draw the ball and platforms
-//		pBall->render();
 		pOpponentPlatform->render();
 		pYourPlatform->render();
 

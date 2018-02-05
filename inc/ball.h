@@ -29,11 +29,12 @@ public:
     	m_v_y = v_y;
     }
 
-    std::pair<int8_t,int8_t> getVelocity(){
-    	std::pair<int8_t,int8_t>temp;
-    	temp.first = m_v_x;
-    	temp.second = m_v_y;
-    	return temp;
+    int8_t getVX(){
+    	return m_v_x;
+    }
+
+    int8_t getVY(){
+    	return m_v_y;
     }
 
     /**
@@ -141,7 +142,8 @@ private:
 				pScore->Lose();
 			}
 			setPosition(64,80);
-			setVelocity(-4,7);
+			setVelocity(-1,7);
+			return false;
     	}
     	return false;
     }

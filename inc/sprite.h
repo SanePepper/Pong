@@ -27,12 +27,6 @@ struct Coord {
  */
 class Sprite {
 public:
-//    void setConfig(int width, int height, uint16_t fg_color, uint16_t bg_color){
-//    	m_width = width;
-//    	m_height = height;
-//    	m_fg_color = fg_color;
-//    	m_bg_color = bg_color;
-//    }
 
 	Sprite(int width, int height, uint16_t fg_color, uint16_t bg_color)
 		: m_width(width), m_height(height), m_fg_color(fg_color), m_bg_color(bg_color){}
@@ -87,6 +81,14 @@ public:
      */
     Coord getPosition(){
     	return m_position;
+    }
+
+    Byte getX(){
+    	return m_position.x;
+    }
+
+    Byte getY(){
+    	return m_position.y;
     }
 
 protected:

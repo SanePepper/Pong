@@ -121,7 +121,6 @@ public:
 			}
 			if((*(data+i) == BitConsts::kSTART) || (*(data+i) == BitConsts::kEND) || (*(data+i) == BitConsts::kACK)){
 				if ((buffer.size() <= 3) && (*(data+i) == BitConsts::kEND)){
-				//if ((buffer.size() < 3) || ((buffer.size() <= 3) && (*(data+i) == BitConsts::kEND))){
 					buffer.clear();
 				}
 				else{

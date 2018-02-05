@@ -119,10 +119,12 @@ int main() {
 			led3.Switch();
     		break;
     	case Bluetooth::PkgType::kReflection:
-    		ball.setVelocity(package.data[0],package.data[1]);
+    		ball.setVelocity(-package.data[0],-package.data[1]);
     		break;
     	case Bluetooth::PkgType::kLocation:
-    		ball.setPosition(package.data[0],package.data[1]);
+    		ball.clear();
+    		ball.setPosition(127-package.data[0],159-package.data[1]);
+    		ball.render();
     		break;
 //update frame_id
     	}
@@ -152,6 +154,7 @@ int main() {
 	writer.WriteString("start");
 
 	if (role == Master){
+		lcd.SetRegion(Lcd::Rect(0,0,128,15));
 		writer.WriteString("master");
 		ball.render();
 		yourPlatform.render();
@@ -160,10 +163,12 @@ int main() {
 //		System::DelayS(2);
 		bt.SendPackage({0,Bluetooth::PkgType::kStart,{},Bluetooth::BitConsts::kSTART},true);
 		while (!start){}//wait for ack
+		lcd.SetRegion(Lcd::Rect(0,0,128,15));
 		writer.WriteString("received");
 	}
 
 	if (role == Slave){
+		lcd.SetRegion(Lcd::Rect(0,0,128,15));
 		writer.WriteString("slave");
 		ball.render();
 		yourPlatform.render();
@@ -174,46 +179,72 @@ int main() {
 	while(!end_game){
 		while(System::Time() != time){
 			time = libsc::System::Time();
-//			if(time % 100 == 0 && role == Master){
-//				bt.SendPackage({frame_id,Bluetooth::PkgType::kLocation,{ball.getPosition().x,ball.getPosition().y},Bluetooth::BitConsts::kEND},true);
-//			}
+			if(time % 100 == 0 && role == Master){
+				bt.SendPackage({frame_id,Bluetooth::PkgType::kLocation,{ball.getX(),ball.getY()},Bluetooth::BitConsts::kEND},true);
+			}
 			if(time % 50 == 0){
 				led2.Switch();
-				char c[10];
-				lcd.SetRegion(Lcd::Rect(0,0,128,15));
-				sprintf(c,"queue %d",bt.queue.size());
-				writer.WriteBuffer(c,10);
-				frame_id++;
+//				char c[10];
+//    			lcd.SetRegion(Lcd::Rect(0,30,100,15));
+//    			sprintf(c,"%d %d %d %d %d",bt.s[0],bt.s[1],bt.s[2],bt.s[3],bt.s[4]);
+//    			writer.WriteBuffer(c,10);
+//    			lcd.SetRegion(Lcd::Rect(0,45,100,15));
+//    			sprintf(c,"%d %d %d %d %d",bt.r[0],bt.r[1],bt.r[2],bt.r[3],bt.r[4]);
+//    			writer.WriteBuffer(c,10);
+//				lcd.SetRegion(Lcd::Rect(0,0,128,15));
+//				sprintf(c,"queue %d",bt.queue.size());
+//				writer.WriteBuffer(c,10);
+//				lcd.SetRegion(Lcd::Rect(0,75,100,15));
+//				sprintf(c,"NS:%d     ",bt.NSCount);
+//				writer.WriteBuffer(c,10);
+//				lcd.SetRegion(Lcd::Rect(0,90,100,15));
+//				sprintf(c,"AS:%d     ",bt.ASCount);
+//				writer.WriteBuffer(c,10);
+//				lcd.SetRegion(Lcd::Rect(0,105,100,15));
+//				sprintf(c,"AR:%d     ",bt.ARCount);
+//				writer.WriteBuffer(c,10);
+//				lcd.SetRegion(Lcd::Rect(0,120,100,15));
+//				sprintf(c,"D:%d     ",bt.DCount);
+//				writer.WriteBuffer(c,10);
+//				lcd.SetRegion(Lcd::Rect(0,135,100,15));
+//				sprintf(c,"N:%d     ",bt.NCount);
+//				writer.WriteBuffer(c,10);
+//				frame_id++;
+				frame_id = (frame_id+1) % 240;
 				if (startClick){
 					if (joystickDir == Joystick::State::kLeft){
 						yourPlatform.moveLeft();
 						yourPlatform.render();
 						if (role == Master){
-							bt.SendPackage({frame_id,Bluetooth::PkgType::kMasterPlatform,{yourPlatform.getPosition().x},Bluetooth::BitConsts::kEND},true);
+							bt.SendPackage({frame_id,Bluetooth::PkgType::kMasterPlatform,{yourPlatform.getX()},Bluetooth::BitConsts::kEND},true);
 						}
 						else if (role == Slave){
-							bt.SendPackage({frame_id,Bluetooth::PkgType::kSlavePlatform,{yourPlatform.getPosition().x},Bluetooth::BitConsts::kEND},true);
+							bt.SendPackage({frame_id,Bluetooth::PkgType::kSlavePlatform,{yourPlatform.getX()},Bluetooth::BitConsts::kEND},true);
 						}
 					}
 					else if (joystickDir == Joystick::State::kRight){
 						yourPlatform.moveRight();
 						yourPlatform.render();
 						if (role == Master){
-							bt.SendPackage({frame_id,Bluetooth::PkgType::kMasterPlatform,{yourPlatform.getPosition().x},Bluetooth::BitConsts::kEND},true);
+							bt.SendPackage({frame_id,Bluetooth::PkgType::kMasterPlatform,{yourPlatform.getX()},Bluetooth::BitConsts::kEND},true);
 						}
 						else if (role == Slave){
-							bt.SendPackage({frame_id,Bluetooth::PkgType::kSlavePlatform,{yourPlatform.getPosition().x},Bluetooth::BitConsts::kEND},true);
+							bt.SendPackage({frame_id,Bluetooth::PkgType::kSlavePlatform,{yourPlatform.getX()},Bluetooth::BitConsts::kEND},true);
 						}
 					}
 				}
-//				if (pong.oneFrame(&lcd, &ball, &yourPlatform, &opponentPlatform, &time, &score) && role == Master){
-//					bt.SendPackage({frame_id,Bluetooth::PkgType::kReflection,{ball.getVelocity().first,ball.getVelocity().second},Bluetooth::BitConsts::kEND},true);
-//				}
+				if (pong.oneFrame(&lcd, &ball, &yourPlatform, &opponentPlatform, &time, &score) && role == Master){
+					bt.SendPackage({frame_id,Bluetooth::PkgType::kReflection,{ball.getVX(),ball.getVY()},Bluetooth::BitConsts::kEND},true);
+				}
 				if (score.getWin() == 3){
+					lcd.SetRegion(Lcd::Rect(0,73,128,15));
+					writer.WriteString("YOU WIN");
 					end_game = true;
 					//you win lcd typewriter
 				}
 				else if (score.getLose() == 3){
+					lcd.SetRegion(Lcd::Rect(0,73,128,15));
+					writer.WriteString("YOU LOSE");
 					end_game = true;
 					//you lose lcd typewriter
 				}
